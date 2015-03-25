@@ -1,0 +1,146 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section styles
+{
+    <link href="~/Content/sidemenu.css" rel="stylesheet" />
+}
+
+<div class="row">
+    <div class="col-md-2 col-lg-2 col-sm-2">
+        <!--字母导航开始-->
+        <div id="lDaoHang">
+        </div>
+        <!--字母导航结束-->
+        <!--树开始-->
+        <div id="cTreeDiv" style="overflow-x: hidden; overflow-y: scroll; height: 550px; width: 99%;">
+        </div>
+        <!--树结束-->
+        <div>
+            <dl id="test"></dl>
+        </div>
+    </div>
+    <div class="col-md-10 col-lg-10 col-sm-10">
+        <div class="carContent" id="carContent">
+            <iframe id="frameCar" src="" scrolling="no" frameborder="0" height="100%" width="100%" onload="this.height=this.contentWindow.document.documentElement.scrollHeight"></iframe>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <script src="~/Scripts/jquery.tmpl.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+
+            //加载首字母
+            $.getJSON('@Url.Action("GetFirstLettersJson", "Home")', function (data) {
+                $('#firstLetterTemplate').tmpl(data).appendTo('#lDaoHang');
+            });
+
+            //加载所有品牌车系
+            $.getJSON('@Url.Action("GetPinPaiCheXiJson", "Home")', function (data) {
+                $('#pinpaiTemplate').tmpl(data).appendTo('#cTreeDiv');
+
+                $('.pLink').each(function () {
+                    pinPaiInitialState($(this));
+                });
+            });
+
+            //隐藏ifame所在div
+            $("#carContent").css("display", "none");
+
+            //点击品牌
+            $('#cTreeDiv').on("click", ".pLink", function () {
+                //切换
+                togglePinPaiState($(this));
+
+                //显示右边区域
+                var url = "/Home/GetCheXingsByPId?pid=" + $(this).attr('id');
+                $("#frameCar").attr("src", url);
+                $("#carContent").css("display", "block");
+            });
+
+            //点击车系
+            $('#cTreeDiv').on("click", ".cxLink", function () {
+                //显示右边区域
+                var url = "/Home/GetCheXingsByChexiId?cxid=" + $(this).attr('id');
+                $("#frameCar").attr("src", url);
+                $("#carContent").css("display", "block");
+            });
+        });
+
+        //品牌的初始状态,即把车系隐藏和品牌前面的图标为+号
+        var pstate = 0;
+
+        //品牌只有2种状态：所有车系隐藏，品牌前面的图标变为为+号；要么显示品牌下的所有车系，品牌前面的图标变为-号
+        //把车系隐藏和品牌前面的图标为+号，记为状态0
+        //把车系隐藏和品牌前面的图标为-号，记为状态1
+        function togglePinPaiState($pinpai) {
+
+
+            if (pstate == 0) {
+                var $i = $pinpai.parent().find("i");
+                var attr = $i.attr('class');
+                if (typeof attr !== typeof undefined && attr !== false) {
+                    $i.removeClass("iconHide");
+                }
+
+                $i.addClass("iconShow");
+                $pinpai.parent().parent().find("dl").show();
+                pstate = 1;
+            } else {
+                var $j = $pinpai.parent().find("i");
+                var attr1 = $j.attr('class');
+                if (typeof attr1 !== typeof undefined && attr1 !== false) {
+                    $j.removeClass("iconShow");
+                }
+                $j.addClass("iconHide");
+                $pinpai.parent().parent().find("dl").hide();
+                pstate = 0;
+            }
+        }
+
+        function pinPaiInitialState($pinpai) {
+            pstate = 0;
+            togglePinPaiState($pinpai);
+        }
+
+    </script>
+
+    <!--首字母模版-->
+    <script id="firstLetterTemplate" type="text/x-jQuery-tmpl">
+        <div class="lWrapper">
+            <a href="#${anchor}" class="lLink">${firstletter}</a>
+        </div>
+    </script>
+
+    <!--品牌模版-->
+    <script id="pinpaiTemplate" type="text/x-jQuery-tmpl">
+        <div class="lHeader" id="${Anchor}">${FirstLetter}</div>
+        <ul class="uTree">
+            {{if PinPais}}
+            {{each PinPais}}
+            <li>
+                <h5 class="font-bold">
+                    <a href="javascript:void(0)" class="pLink" id="${$value.PinPaiId}"><i></i>${$value.PinPaiName}</a>
+                </h5>
+                <dl>
+                    {{tmpl(CheXis) "#chexiTemplate"}}
+                </dl>
+            </li>
+            {{/each}}
+            {{else}}
+            <li>没有对应品牌</li>
+            {{/if}}
+                
+        </ul>
+    </script>
+
+    <!--车系模版-->
+    <script id="chexiTemplate" type="text/x-jQuery-tmpl">
+        <dd><a id="${CheXiId}" href="javascript:void(0)" class="cxLink">${CheXiName}<em>(${TotalCount})</em></a></dd>
+    </script>
+}

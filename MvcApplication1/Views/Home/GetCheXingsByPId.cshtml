@@ -1,0 +1,16 @@
+﻿@model IEnumerable<MvcApplication1.Models.Car>
+
+@{
+    ViewBag.Title = "GetCheXingsByPId";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>GetCheXingsByPId</h2>
+
+<div>
+    @foreach (var item in Model)
+    {
+        <p>@item.Name </p>
+    
+    }
+</div>
